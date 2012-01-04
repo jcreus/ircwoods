@@ -18,6 +18,18 @@ class TextFileLogger:
     def close(self):
         self.file.close()
 
+hlp = {"repo":"Link to the sympy repository.","pull": "pull \d+: Link to a specific pull request.","help":"Without arguments, info about myself. With an argument, help about a command named like that.","pulls":"Link to the list of pull request.","commands":"My skills."}
+
+
+class SympyFunctions:
+    def __init__(self): pass
+
+    def help(self,msg):
+        if len(msg) != 0:
+           return hlp.get(msg[0],"I don't have help for that, you insensitive clod!")
+        else:
+           return "The SymPy IRC Bot: https://github.com/jcreus/ircwoods"
+
 class IRCBot:
     def __init__(self, config):
         self.host = config.get("host",None)
@@ -26,6 +38,7 @@ class IRCBot:
         self.user = config.get("user","testbotb")
         self.logger = config.get("logger",None)
         self.channels = config.get("channels",[])
+        self.functions = config.get("functions",None)
        
     def _getUser(self,user):
         return user.split("!")[0]
@@ -66,9 +79,24 @@ class IRCBot:
                 msg = ' '.join(parts[2:])
                 timestamp = time.time()
                 self.logger.addEntry(chan, "<%s> %s\n" % (self._getUser(user),msg), timestamp)
+                if user == self.nick: continue
                 if "!pull" in msg:
                    for pull in re.findall("\!pull (\d+)",msg):
-                      self.sock.send("PRIVMSG "+chan+" :https://github.com/sympy/sympy/pull/"+pull+"\n")#self.sock.send("PRIVMSG 
+                      self.sock.send("PRIVMSG "+chan+" :https://github.com/sympy/sympy/pull/"+pull+"\n")#self.sock.send("PRIVMSG
+                dic = {"!repo":"https://github.com/sympy/sympy","!pulls":"https://github.com/sympy/sympy/pulls","!help":self.functions.help,"!commands":"!help, !pull \d+, !pulls, !repo"}
+                for x in dic:
+                   if x in msg:
+                     if hasattr(dic[x], '__call__'):
+                      if msg.find(x) == 0:
+                         sp = msg.split(" ")
+                         if len(sp) > 1:
+                            sp = sp[1:]
+                         else: sp = []
+                         self.sock.send("PRIVMSG "+chan+" :"+dic[x](sp)+"\n")
+                      else:
+                         self.sock.send("PRIVMSG "+chan+" :"+dic[x]([])+"\n")
+                     else:
+                         self.sock.send("PRIVMSG "+chan+" :"+dic[x]+"\n")
 
     def disconnect(self):
         self.sock.close()
@@ -78,8 +106,9 @@ class IRCBot:
         self.sock.send('JOIN #%s\n' % channel)
 
 l = TextFileLogger()
+f = SympyFunctions()
 # Channels without #, unless you want a two-# channel. For example, sympy for channel #sympy, but #justatest for channel ##justatest.
-i = IRCBot({"host":"irc.freenode.net","channels":["#justatest"],"logger":l})
+i = IRCBot({"host":"irc.freenode.net","channels":["#justatest"],"logger":l,"functions":f})
 try:
     i.connect()
 except KeyboardInterrupt:
