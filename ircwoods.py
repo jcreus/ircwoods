@@ -18,13 +18,13 @@ class TextFileLogger:
     def close(self):
         self.file.close()
 
-hlp = {"repo":"Link to the sympy repository.","pull": "pull \d+: Link to a specific pull request.","help":"Without arguments, info about myself. With an argument, help about a command named like that.","pulls":"Link to the list of pull request.","commands":"My skills."}
-
-
 class SympyFunctions:
     def __init__(self): pass
 
     def help(msg,tot):
+
+        hlp = {"repo":"Link to the sympy repository.","pull": "!pull \d+: Link to a specific pull request.","help":"Without arguments, info about myself. With an argument, help about a command named like that.","pulls":"Link to the list of pull request.","commands":"My skills.","issue":"!issue \d+: Link to a specific Google Code issue."}
+
         if len(msg) != 0:
            return hlp.get(msg[0],"I don't have help for that, you insensitive clod!")
         else:
@@ -35,9 +35,15 @@ class SympyFunctions:
         for pull in re.findall("\!pull (\d+)",tot):
             ret.append("https://github.com/sympy/sympy/pull/"+pull)
         return ', '.join(ret)
+
+    def issue(msg,tot):
+        ret = []
+        for issue in re.findall('\!issue (\d+)',tot):
+            ret.append("http://code.google.com/p/sympy/issues/detail?id="+issue)
+        return ', '.join(ret)
         
 
-    commands = {"!repo":"https://github.com/sympy/sympy","!pulls":"https://github.com/sympy/sympy/pulls","!help":help,"!commands":"!help, !pull \d+, !pulls, !repo","!pull":pull}
+    commands = {"!repo":"https://github.com/sympy/sympy","!pulls":"https://github.com/sympy/sympy/pulls","!help":help,"!commands":"!help, !pull \d+, !pulls, !repo","!pull":pull,"!issue":issue}
 
 class IRCBot:
     def __init__(self, config):
