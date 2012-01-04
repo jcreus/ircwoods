@@ -24,11 +24,20 @@ hlp = {"repo":"Link to the sympy repository.","pull": "pull \d+: Link to a speci
 class SympyFunctions:
     def __init__(self): pass
 
-    def help(self,msg):
+    def help(msg,tot):
         if len(msg) != 0:
            return hlp.get(msg[0],"I don't have help for that, you insensitive clod!")
         else:
            return "The SymPy IRC Bot: https://github.com/jcreus/ircwoods"
+
+    def pull(msg,tot):
+        ret = []
+        for pull in re.findall("\!pull (\d+)",tot):
+            ret.append("https://github.com/sympy/sympy/pull/"+pull)
+        return ', '.join(ret)
+        
+
+    commands = {"!repo":"https://github.com/sympy/sympy","!pulls":"https://github.com/sympy/sympy/pulls","!help":help,"!commands":"!help, !pull \d+, !pulls, !repo","!pull":pull}
 
 class IRCBot:
     def __init__(self, config):
@@ -80,10 +89,8 @@ class IRCBot:
                 timestamp = time.time()
                 self.logger.addEntry(chan, "<%s> %s\n" % (self._getUser(user),msg), timestamp)
                 if user == self.nick: continue
-                if "!pull" in msg:
-                   for pull in re.findall("\!pull (\d+)",msg):
-                      self.sock.send("PRIVMSG "+chan+" :https://github.com/sympy/sympy/pull/"+pull+"\n")#self.sock.send("PRIVMSG
-                dic = {"!repo":"https://github.com/sympy/sympy","!pulls":"https://github.com/sympy/sympy/pulls","!help":self.functions.help,"!commands":"!help, !pull \d+, !pulls, !repo"}
+                
+                dic = self.functions.commands
                 for x in dic:
                    if x in msg:
                      if hasattr(dic[x], '__call__'):
@@ -92,9 +99,9 @@ class IRCBot:
                          if len(sp) > 1:
                             sp = sp[1:]
                          else: sp = []
-                         self.sock.send("PRIVMSG "+chan+" :"+dic[x](sp)+"\n")
+                         self.sock.send("PRIVMSG "+chan+" :"+dic[x](sp,msg)+"\n")
                       else:
-                         self.sock.send("PRIVMSG "+chan+" :"+dic[x]([])+"\n")
+                         self.sock.send("PRIVMSG "+chan+" :"+dic[x]([],msg)+"\n")
                      else:
                          self.sock.send("PRIVMSG "+chan+" :"+dic[x]+"\n")
 
